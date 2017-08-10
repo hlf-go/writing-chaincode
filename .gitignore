@@ -1,3 +1,4 @@
 .DS_Store
-
-
+fabric/tools/
+fabric/channel-artifacts/
+fabric/crypto-config/
