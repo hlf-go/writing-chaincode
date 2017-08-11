@@ -15,7 +15,7 @@ Profiles:
             Organizations:
                 - *OrdererOrg
         Consortiums:
-            ComposerConsortium:
+            MyConsortium:
                 Organizations:
                     - *Org1
     MyOrgsChannel:
