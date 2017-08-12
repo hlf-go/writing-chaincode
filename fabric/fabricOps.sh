@@ -10,8 +10,15 @@ FIRST_ARG="$1"
 function verifyArg() {
 
     if [ $ARGS_NUMBER -ne 1 ]; then
-        echo "Useage: networkOps.sh start | status | clean"
+        echo "Useage: networkOps.sh start | status | clean | cli | peer"
         exit 1;
+    fi
+}
+
+function createLogFolder(){
+    cd $PROJECT_DIR
+    if [ ! -d ./logs ]; then
+        mkdir ./logs
     fi
 }
 
@@ -112,6 +119,10 @@ function cleanNetwork() {
             rm -rf ./tools
     fi
 
+    if [ -d ./logs ]; then
+            rm -rf ./logs
+    fi
+
     cd $GOPATH/src/github.com/hyperledger/fabric
     make clean
 
@@ -123,10 +134,19 @@ function networkStatus() {
     docker ps -a | grep '[peer0* | orderer* | cli ]'
 }
 
+function dockerCli(){
+    docker exec -it cli /bin/bash
+}
+
+function dockerPeer(){
+    docker logs peer0.org1.example.com -f
+}
+
 # Network operations
 verifyArg
 case $FIRST_ARG in
     "start")
+        createLogFolder
         createTools
         generateArtifacts
         startNetwork
@@ -137,8 +157,14 @@ case $FIRST_ARG in
     "clean")
         cleanNetwork
         ;;
+    "cli")
+        dockerCli
+        ;;
+    "peer")
+        dockerPeer
+        ;;
     *)
-        echo "Useage: networkOps.sh start | status | clean"
+        echo "Useage: networkOps.sh start | status | clean | cli | peer"
         exit 1;
 esac
 
