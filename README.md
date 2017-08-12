@@ -323,9 +323,9 @@ We'll be using Docker. If you have not setup Docker please refer to [documentati
 * `peer0.org1.example.com` is the container that will be responsible for executing your chaincode.
 * `cli` is a command line container that you use to interact with `peer0.org1.example.com`.
 
-It is important to note that this is **not** a realistic infrastructure for any Blockchain application. It is only to support simple chaincode development by enabling developer to see a running chaincode.
+It is important to note that this is **not** a infrastructure for a realistic Blockchain application. It is only to support simple chaincode development process by enabling developer to probe a running chaincode.
 
-There are also other aspects of the hyperledger fabric infrastructure that is beyond the scope of this document. These are to do with cryptography, which you need not concern you for now. However, as you probe the interactions of running chaincode and peer via logs, you will see lots of encoded output. We'll cover this in later section. 
+There are also other aspects of the hyperledger fabric infrastructure that is beyond the scope of this document. These are cryptography components, which need not concern you for now. However, as you probe the interactions of running chaincode and peer via logs, you will see lots of encoded output. We'll explain highlight those this in later sections. 
 
 For detailed descriptions of the roles of hyperledger fabric components, please refer to hyperledger fabric [architecture explained](http://hyperledger-fabric.readthedocs.io/en/latest/arch-deep-dive.html).
 
@@ -333,15 +333,17 @@ For detailed descriptions of the roles of hyperledger fabric components, please 
 
 Fortunately for you, you can simply download a minimal infrastructure which is found [here](./fabric).
 
+[To Do]
+
 # <a name="exampleChaincode">Example chaincode</a>
 
-TO DO
+[To Do]
 
 # Disclaimer
 
-The artefacts in this repository are intended only to illustrate concepts and are for educational purpose.
+The methodologies discussed in this document and artefacts in this repository are intended only to illustrate concepts and are for educational purpose.
 
-There is no guarantee that these artefacts are free from defects. These are NOT to be used or re-produced in any mission critical, corporate or regulated infrastructure. Should you choose to use or re-produce them for your project yo do so at your own risk.
+There is no guarantee that these artefacts are free from defects. These are **NOT** intended for used in any mission critical, corporate or regulated projects. Should you choose to use them for these types of projects, you do so at your own risk.
 
 Unless otherwise specified, the artefacts in this repository are distributed under Apache 2 license. In particular, the chaincodes are provided on "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
