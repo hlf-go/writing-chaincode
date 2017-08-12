@@ -2,7 +2,7 @@
 
 The purpose of this article is to provide you with 1) minimal knowledge of Go, and 2) a view of developing chaincode from coding (not abstract) perspective. Armed with these basic knowledger you will be able to extend the knowledge to do advance chaincode development.
 
-This article is intended for anyone with programming experience but having no or very little experience of Go and chaincode development. You will be expected to know concepts compilation and packaging as Go is a compiled, not scripting, langauge.
+This article is intended for anyone with programming experience but having no or very little experience of Go and chaincode development. You are expected to know concepts compilation and packaging as Go is a compiled, not scripting, langauge. 
 
 If you are already an experience Go developer please refer to [hyperledger fabric documentation for advance instruction](http://hyperledger-fabric.readthedocs.io/en/latest/chaincode4ade.html).
 
@@ -21,8 +21,14 @@ Setting up a development environment for chaincode projects is no different from
 For a basic (terminal and command-line) environment for chaincode development, please follow the following steps:
 
 1. Install [Go tools](http://golang.org/dl).
+
     * for macOS, we recommend installing via [homebrew](http://brew.sh/);
     * for other platforms please refer to [installation guide](https://golang.org/doc/install).
+
+    **Note:**
+
+    * Please also ensure that you also install C++ compiler. Refer to your respective platform documentation for instructions.
+    * On Ubuntu you may also need to install a library call `ltdl` (please refer to `apt-get install ltdl-dev`).
 
 1. Set the environmental variable `GOPATH` to a reference a directory to host your Go source codes and binaries (i.e. Go workspace). For example,
     
@@ -30,7 +36,7 @@ For a basic (terminal and command-line) environment for chaincode development, p
     export GOPATH=$HOME/go-projects
     ```
 
-1. Install a GO application call [Govendor](https://github.com/kardianos/govendor) by executing this command:
+1. Navigate to the `$GOPATH` directory and install a GO application call [Govendor](https://github.com/kardianos/govendor) by executing this command:
     
     ```
     go get -u github.com/kardianos/govendor
@@ -61,6 +67,22 @@ For a basic (terminal and command-line) environment for chaincode development, p
     ```
 
     `$GOPATH/bin` is a directory for binaries generated from Go source compilation. Some of these binaries may be used to extend the functionalities of Go tooling or any other support tools. If you are using [Visual Studio Code](https://code.visualstudio.com/), you will find extensions to the editor such as code completion or syntax highlighting, served from this directory.
+
+1. Get the hyperledger fabric dependencies (the framework to support your chaincode developmemnt) by issuing the following commands:
+
+    ```
+    go get -d github.com/hyperledger/fabric
+    ```
+
+    At the completion of this command, you will see this message:
+
+    ```
+    package github.com/hyperledger/fabric: no buildable Go source files in /Users/blockchain/workspace/misc/src/github.com/hyperledger/fabric
+    ```
+    
+    There is no need to worry. Go tooling typically pull source codes and then tries to build a binary but in this case the hyperledger fabric dependencies have nothing to be built.
+
+    To ensure that the dependencies have been pulled down, simply navigate to `$GOPATH/src/github.com` and if you see the directory `hyperledger` it means that dependencies have been downloaded. 
 
 # <a name="learnGoLang">Minimal Go for Chaincode</a>
 
@@ -116,7 +138,7 @@ func main() {
 
 To compile and execute this code all you need to do is to issue the command `go run`. It will run in your macOS, Linux, Windows or any compatible platform.
 
-In the case of chaincode the smallest unit of executable code is this:
+In the case of chaincode, the smallest unit of executable code is this:
 
 ```
 package main
@@ -163,15 +185,14 @@ You will see the following output:
 exit status 1
 ```
 
-This is a runtime error message and it simply indicates that the chaincode has been executed. However, it has no hyperledger fabric infastructure to interact with so this error message occur.
+This simply indicates that the chaincode has been successfully compiled and your code has been executed. However, there is no running hyperledger fabric infastructure to interact with so you see this error message.
 
-Unlike normal Go program, you can't just compile and run the code. Instead you will need to bundle the code and deploy it to the hyperledger fabric platform known as fabric peer (see [architecture](http://hyperledger-fabric.readthedocs.io/en/latest/arch-deep-dive.html#system-architecture) for detailed explanation). The fabric peer will compile and run the code.
+Unlike normal Go program, you can't just compile and run the code. Instead you will need to bundle the code and deploy it to a running hyperledger fabric platform known as fabric peer (see [architecture](http://hyperledger-fabric.readthedocs.io/en/latest/arch-deep-dive.html#system-architecture) for detailed explanation). The fabric peer will compile and run the code from, typically, a Docker container.
 
 **Note:**
 
-* In the import clause, you see this `github.com/hyperledger/fabric/core/chaincode/shim`, which is a hyperledger fabric component
-* You will find the component in `$GOPATH/src/github.com/hyperledger/fabric`.
-* When you execute `go run` Go will pull this dependency from Github repo. Alternatively you could issue this command `go get -d github.com/hyperledger/fabric` to pull the dependency from Github repo.
+* In the `import` clause of your chaincode, you'll see this `github.com/hyperledger/fabric/core/chaincode/shim`, which is a hyperledger fabric component.
+* The `import` is derived from `$GOPATH/src/github.com/hyperledger/fabric`.
 
 ### <a name="organiseChaincode">Organising your chaincode project</a>
 
@@ -192,13 +213,69 @@ $GOPATH/
 
 This is minimally sufficient to compile and run code on macOS, Linux, Windows, etc.
 
-In the case of chaincode development, this structure will not work. You will need to organise all your dependencies under one root directory and then deploy the root directory to fabric peer. 
+In the case of chaincode development, this structure will not work. You will need to organise all your dependencies under one root directory and then deploy the root directory to a fabric peer. 
 
 Here is an example of a hypothetical chaincode project:
 
 ```
+$GOPATH/
+    src/
+        github.com/user/repo/
+            mychaincode/
+                util/
+                    mymaths.go
+                chaincode.go
+                vendor/
+                    github.com/user/repo
+                        mysrc1.go
+                        mysrc2.go
+                    vendor.json
+```
+In this example:
+
+* `mychaincode` directory is the root directory encapsulating your entire chaincode artifacts including dependencies; 
+* `util` is an example custom directory created by you to distribute your chaincode;
+* `vendor` is a special directory (with a file `vendor.json`) typically to package dependencies not located at the chaincode root or third parties (see detailed explanations of the use of [vendor folder](https://blog.gopheracademy.com/advent-2015/vendor-folder/)).
+
+You can manually create and provision the `vendor` directory but using tools makes it easier. As per the [setup step](#setupDevEnv), let's use `Govendor` to `vendor` your dependencies: 
+
+1. Navigate to `$GOPATH/src/github.com/user/repo/mychaincode` and execute this command:
+
+    ```
+    govendor init
+    ```
+
+   You should see a directory call `vendor`.
+
+1. In the directory `vendor` add the following line to `vendor.json`:
+
+    ```
+    "ignore": "test github.com/hyperledger/fabric"
+    ```
+
+    This line tells `govendor` not to include `github.com/hyperledger/fabric` and test dependencies. You don't need to include hyperledger fabric dependency because it is part of the fabric peer infrastructure.
+
+1. We are going to `vendor` a third party dependency `github.com/user/repo` by issuing this command:
+
+    ```
+    govendor fetch github.com/user/repo
+    ```
+
+    If no error you will see the dependencies stored in `vendor` directory.
+
+**Note:**
+
+* What if I wish to re-use another project that is outside the chaincode root directory but in the Go workspace?
+
+* For example:
+
+    ```
     $GOPATH/
         src/
+            github.com/user/another-repo/
+                support/
+                    superduper-support.go
+                superduper-algo.go
             github.com/user/repo/
                 mychaincode/
                     util/
@@ -209,38 +286,11 @@ Here is an example of a hypothetical chaincode project:
                             mysrc1.go
                             mysrc2.go
                         vendor.json
-```
-In this example:
-
-* `mychaincode` directory is the root directory encapsulating all you chaincode and dependencies. 
-* `util` is a customer directory created by the developer. 
-* `vendor` is a special directory (with a file `vendor.json`) typically to package dependencies not located at the chaincode root or third parties. Please refer to https://blog.gopheracademy.com/advent-2015/vendor-folder/ for detailed explanations.
-
-You can manually create and provision the `vendor` directory but using tools makes it easier. As per the [setup step](#setupDevEnv), let's use `Govendor` to `vendor` your dependencies: 
-
-1. Navigate to `$GOPATH/src/github.com/user/repo/mychaincode` and execute this command:
-
-    ```
-    govendor init
     ```
 
-   You should see a sub folder call `vendor` created.
+    I wish to vendor `github.com/user/another-repo/` in mychaincode.
 
-1. In the folder `vendor` add the following line to `vendor.json`:
-
-    ```
-    "ignore": "test github.com/hyperledger/fabric"
-    ```
-
-    This line tells `govendor` not to include `github.com/hyperledger/fabric` and test dependencies. You don't need to include hyperledger fabric dependency because it is part of the fabric peer infrastructure.
-
-1. We are going to `vendor` dependencies found in `github.com/user/repo`. Issue this command:
-
-    ```
-    govendor fetch github.com/user/repo
-    ```
-
-    If no error you will see the dependencies stored in `vendor` directory.
+* It is beyond the scope of this article but you could consider using the command `govendor add +external`. This will pull all the artefacts in `$GOPATH` into `vendor`. Please refer to [Govendor documentation](github.com/user/another-repo/) for details.
 
 # <a name="runChaincode">Install, instatiate and invoke chaincode</a>
 
