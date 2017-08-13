@@ -331,9 +331,22 @@ For detailed descriptions of the roles of hyperledger fabric components, please 
 
 ### <a name="setupMinimalFabric">Setup a minimal hyperledger fabric</a>
 
-Fortunately for you, you can simply download a minimal infrastructure which is found [here](./fabric).
+You will find a set of scripts located [here](./fabric) to help you:
 
-[To Do]
+* [configure docker containers](./fabric/docker-compose.yml);
+* membership assets (i.e. [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml));
+* [install, instantiate and invoke chaincode](./fabric/scripts);
+* [manage fabric operations](./fabric/fabricOps.sh).
+
+In the case of [fabricOps.sh](.fabric/fabricOps.sh), you use it to:
+
+| Command | Action | Comments |
+|---|---|---|
+| `fabricOps.sh start` | Start a running fabric infrastructure | A membership assets are generated based on [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml) and docker containers |
+| `fabricOps.sh status` | Check status of docker containers | Example showing all containers running: <code><b><br>dev-peer0.org1.example.com-mycc-1.0: Up 24 seconds<br>peer0.org1.example.com: Up 26 minutes<br>cli: Up 26 minutes<br>orderer.example.com: Up 26 minutes</code></b> |
+| `fabricOps.sh clean` | Reset the fabric infrastructure | This operation removes membership and docker artefacts.<br> **NOTES:**<br> This will only remove docker containers and images that are responsible for running chaincodes (typically with a name containing `dev-` prefix). It should not impact any docker containers that you may already have in operation but I can't be guaranteed. If you have concerned please modify `fabricOps.sh` accordingly. |
+| `fabricOps.sh cli` | Gives you access to fabric `cli` | You will be given access to `cli`'s own terminal. From there you can then execute chaincode related operations which we'll discussion on the next sections |
+
 
 # <a name="exampleChaincode">Example chaincode</a>
 
