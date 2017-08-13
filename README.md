@@ -3,6 +3,7 @@
 The purpose of this document is to provide you with:
 
 * minimal knowledge of Go; 
+
 * a view of developing chaincode from coding (not abstract) perspective. 
 
 Hopefully following from what you have learnt here, you will have sufficient knowledge to move on to developing real-world chaincode.
@@ -14,10 +15,14 @@ If you are already an experience Go developer please refer to [hyperledger fabri
 In this document, you will learn to:
 
 * [Setup for chaincode development](#setupDevEnv)
+
 * [Minimal Go for chaincode development](#learnGo)
+
 * [Write chaincodes](#goForChaincode)
-* [Run chaincode](#runChaincode)
-* [Example chaincode](#exampleChaincode)
+
+* [Hyperledger fabric for chaincode development](#fabricForDevelopment)
+
+* [Debugging chaincode](#debugChaincode)
 
 # <a name="setupDevEnv">Setup for chaincode development</a>
 
@@ -28,11 +33,13 @@ For a basic (terminal and command-line) environment for chaincode development, p
 1. Install [Go tools](http://golang.org/dl).
 
     * for macOS, we recommend installing via [homebrew](http://brew.sh/);
+
     * for other platforms please refer to [installation guide](https://golang.org/doc/install).
 
-    **Note:**
+    Additional notes for this setp:
 
     * Please also ensure that you also install C++ compiler. Refer to your respective platform documentation for instructions.
+
     * On Ubuntu you may also need to install a library call `ltdl` (please refer to `apt-get install ltdl-dev`).
 
 1. Set the environmental variable `GOPATH` to a reference a directory to host your Go source codes and binaries (i.e. Go workspace). For example,
@@ -59,7 +66,7 @@ For a basic (terminal and command-line) environment for chaincode development, p
 
     In the context of chaincode development, you will be working mainly with Go sources. Hence, you only need to concern yourself with organising stuff within `src` directory.
 
-    **Note:**
+    Additional notes for this step:
 
     * This step is not strictly needed. You could have create the workspace directories manually.
 
@@ -100,11 +107,14 @@ To learn more about Go progranmning language, please refer to these resources:
 To create a minimal chaincode focus your learning on these areas 
 
 * [data types](https://gobyexample.com/variables);
+
 * [functions](https://gobyexample.com/functions);
+
 * [structs](https://gobyexample.com/structs);
+
 * [interfaces](https://gobyexample.com/interfaces).
 
-You will also need to be aware that all your Go (chaincode) codes needs to organised around `$GOPATH/src` directory. For example, here is a hypothetical structure:
+You will also need to be aware that all your Go codes (and chaincodes) have to be organised around `$GOPATH/src` directory. For example, here is a hypothetical structure:
 
 ```
     $GOPATH/src
@@ -124,6 +134,7 @@ Organise your code and dependencies to reflect the way codes would be stored in 
 In this section you will learn to:
 
 * [write the smallest unit of executable chaincode](#smallestchaincode);
+
 * [organise your chaincode project](#organiseChaincode).
 
 ### <a name="smallestchaincode">Smallest unit of executable chaincode</a>
@@ -196,10 +207,15 @@ Unlike normal Go program, you can't just compile and run chaincode in macOS, Lin
 
 A fabric peer typically runs from a Docker container. Although you could "natively" deploy a peer as part of a component of macOS, Linux, Windows, etc., it is beyond the scope of this document. We'll only focus on the Docker version.
 
-**Note:**
+<hr>
+
+**Note**
 
 * In the `import` clause of your chaincode, you'll see this `github.com/hyperledger/fabric/core/chaincode/shim`, which is a hyperledger fabric component (i.e. think library if you are C++ programmer).
+
 * The `import` is derived from `$GOPATH/src/github.com/hyperledger/fabric`.
+
+<hr>
 
 ### <a name="organiseChaincode">Organising your chaincode project</a>
 
@@ -244,8 +260,10 @@ $GOPATH/
 ```
 In this example:
 
-* `mychaincode` directory is the root directory encapsulating your entire chaincode artifacts including dependencies; 
+* `mychaincode` directory is the root directory encapsulating your entire chaincode artifacts including dependencies;
+
 * `util` is an example custom directory created by you to distribute your chaincode;
+
 * `vendor` is a special directory (with a file `vendor.json`) typically to package dependencies not located at the chaincode root or third parties (see detailed explanations of the use of [vendor folder](https://blog.gopheracademy.com/advent-2015/vendor-folder/)).
 
 You can manually create and provision the `vendor` directory but using tools makes it easier. As per the [setup step](#setupDevEnv), let's use `Govendor` to `vendor` your dependencies: 
@@ -274,11 +292,13 @@ You can manually create and provision the `vendor` directory but using tools mak
 
     If no error you will see the dependencies stored in `vendor` directory.
 
+<hr>
+
 **Note:**
 
 * What if I wish to re-use another project that is outside the chaincode root directory but in the Go workspace?
 
-* For example:
+* For example, this is my code structure:
 
     ```
     $GOPATH/
@@ -300,57 +320,163 @@ You can manually create and provision the `vendor` directory but using tools mak
                         vendor.json
     ```
 
-    I wish to vendor `github.com/user/another-repo/` in mychaincode.
+    I wish to vendor `github.com/user/another-repo/` in `mychaincode` directory.
+    
+    It is beyond the scope of this document but you could consider using the command `govendor add +external`. This will pull all the artefacts in `$GOPATH` into `vendor`. Please refer to [Govendor documentation](github.com/user/another-repo/) for details.
 
-* It is beyond the scope of this document but you could consider using the command `govendor add +external`. This will pull all the artefacts in `$GOPATH` into `vendor`. Please refer to [Govendor documentation](github.com/user/another-repo/) for details.
+<hr>
 
-# <a name="runChaincode">Run chaincode</a>
+# <a name="fabricForDevelopment">Hyperledger fabric for chaincode development</a>
 
 In this section, you will learn:
 
-* [minimal hyperledger fabric infrastructure](#minimalFabric);
+* [about roles of the components of a minimal fabric](#minimalFabric);
+
 * [setup a minimal hyperledger fabric infrastructure](#setupMinimalFabric)
 
-### <a name="minimalFabric">Minimal hyperledger fabric infastructure</a>
+### <a name="minimalFabric">Roles of minimal fabric component</a>
 
-In order to see your chaincode in action, you'll need to establish running hyperledger fabric infrastructure and deploy your chaincode there. Setting up a full featured running hyperldger fabric infrastructure is a big undertaking.
+In order to see your chaincode in action, you'll need to setup fabric infrastructure and deploy your chaincode there. A full featured running fabric infrastructure has many components.
 
-For the purpose of document, we'll focus on the most minimal hyperledger fabric infrastructure to enable you to run a chaincode. 
+For the purpose of document, we'll focus on the most minimal fabric infrastructure to enable you to probe a running chaincode. 
 
-We'll be using Docker. If you have not setup Docker please refer to [documentation](https://www.docker.com/community-edition#/download). You can see an example of a minimal infrastructure [here](./fabric/docker-compose.yml). Here you see three docker containers.
+We'll be using Docker. If you have not setup Docker please refer to [documentation](https://www.docker.com/community-edition#/download). You can see an example of a minimal infrastructure configuration [here](./fabric/docker-compose.yml). 
 
-* `orderer.example.com` where it's role is beyond the scope of document.
-* `peer0.org1.example.com` is the container that will be responsible for executing your chaincode.
+The docker containers that comprise a minimal fabric infastructure are: 
+
+* `orderer.example.com` where it's role is beyond the scope of document and for simplicity just think of it as a manager for the next component;
+
+* `peer0.org1.example.com` is the container that will be responsible for spinning up another container to support your running chaincode;
+
 * `cli` is a command line container that you use to interact with `peer0.org1.example.com`.
 
-It is important to note that this is **not** a infrastructure for a realistic Blockchain application. It is only to support simple chaincode development process by enabling developer to probe a running chaincode.
+<hr>
 
-There are also other aspects of the hyperledger fabric infrastructure that is beyond the scope of this document. These are cryptography components, which need not concern you for now. However, as you probe the interactions of running chaincode and peer via logs, you will see lots of encoded output. We'll explain highlight those this in later sections. 
+**NOTE**
+
+This is not an setup for use in, or representative of, any mission critical blockchain use case. This is only to support a simple chaincode development process by enabling developer to get feedback from a running chaincode.
+
+There are also other aspects of the hyperledger fabric infrastructure that is beyond the scope of this document. These are cryptography components, which need not concern you for current discussion.
 
 For detailed descriptions of the roles of hyperledger fabric components, please refer to hyperledger fabric [architecture explained](http://hyperledger-fabric.readthedocs.io/en/latest/arch-deep-dive.html).
+
+<hr>
 
 ### <a name="setupMinimalFabric">Setup a minimal hyperledger fabric</a>
 
 You will find a set of scripts located [here](./fabric) to help you:
 
 * [configure docker containers](./fabric/docker-compose.yml);
-* membership assets (i.e. [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml));
+
+* membership polcy assets (i.e. [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml));
+
 * [install, instantiate and invoke chaincode](./fabric/scripts);
+
 * [manage fabric operations](./fabric/fabricOps.sh).
 
 In the case of [fabricOps.sh](.fabric/fabricOps.sh), you use it to:
 
 | Command | Action | Comments |
 |---|---|---|
-| `fabricOps.sh start` | Start a running fabric infrastructure | A membership assets are generated based on [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml) and docker containers |
-| `fabricOps.sh status` | Check status of docker containers | Example showing all containers running: <code><b><br>dev-peer0.org1.example.com-mycc-1.0: Up 24 seconds<br>peer0.org1.example.com: Up 26 minutes<br>cli: Up 26 minutes<br>orderer.example.com: Up 26 minutes</code></b> |
-| `fabricOps.sh clean` | Reset the fabric infrastructure | This operation removes membership and docker artefacts.<br> **NOTES:**<br> This will only remove docker containers and images that are responsible for running chaincodes (typically with a name containing `dev-` prefix). It should not impact any docker containers that you may already have in operation but I can't be guaranteed. If you have concerned please modify `fabricOps.sh` accordingly. |
-| `fabricOps.sh cli` | Gives you access to fabric `cli` | You will be given access to `cli`'s own terminal. From there you can then execute chaincode related operations which we'll discussion on the next sections |
+| `fabricOps.sh start` | Start a running fabric infrastructure | In order for `peer0.org1.example.com` to work with `orderer.example.com` they must be managed within the context the same membership policy. The policy assets are generated based on [configtx.yml](./fabric/configtx.yml) and [crypto config](./fabric/crypto-config.yaml).<br><br>When you execute this fabric operation, a share member policy is generated and followed by docker contanters. |
+| `fabricOps.sh status` | Check status of docker containers | This operation is used to check the status of your docker containers.<br><br>This example shows all the relevant containers are running properly: <code><b><br>dev-peer0.org1.example.com-mycc-1.0: Up 24 seconds<br>peer0.org1.example.com: Up 26 minutes<br>cli: Up 26 minutes<br>orderer.example.com: Up 26 minutes</code></b> |
+| `fabricOps.sh clean` | Reset the fabric infrastructure | This operation removes membership and docker artefacts.<br><br> **NOTES:**<br> This will only remove docker containers and images that are responsible for running chaincodes (typically with a name containing `dev-` prefix). It should not impact any docker containers that you may already have in operation but I can't be guaranteed. If you have concerned please modify `fabricOps.sh` accordingly. |
+| `fabricOps.sh cli` | This operation gives you access to fabric `cli` | You will be given access to `cli`'s own terminal. From there you can then execute chaincode related operations which we'll discussion on the next sections |
 
+<hr>
 
-# <a name="exampleChaincode">Example chaincode</a>
+**Windows**
 
-[To Do]
+There is currently no out-of-the-box support for Windows platform. The script `fabricOps.sh` only supports macOS or Linux.
+
+<hr>
+
+# <a name="debugChaincode">Debugging chaincode</a>
+
+In this section, you will learn to execute a simple chaincode and debug your chaincode using the infrastructure shown above.
+
+To help you get going with your learning, please follow the following steps:
+
+1. Executing this command `go get github.com/hlf-go/writing-chaincode` (assuming you have already completed [this setup](setupDevEnv)).
+
+    You will find this in your Go workspace:
+
+    ```
+    $GOPATH/src/github.com/hlf-go/
+        writing-chaincode/
+            chaincodes/
+                myfirstchaincode
+                    chaincode.go
+            fabric/
+                scripts/
+                    myfirstchaincode.sh
+                configtx.yml
+                crypto-config.yaml
+                docker-compose.yml
+                fabricOps.sh
+            .gitignore
+            README.md
+    ```
+
+    This is a pre-configured chaincode development framework.
+
+1. Navigate to `$GOPATH/src/github.com/hlf-go/fabric/` and execute this command (on macOS and Linux only):
+
+    ```
+    ./fabricOps.sh start
+    ```
+
+    This will take sometime. The process will download docker images and setup your docker containers.
+
+1. Execute the following command:
+
+    ```
+    ./fabricOps.sh cli
+    ```
+
+    In your bash terminal, you will be presented with the terminal running from the `cli` container:
+
+    ```
+    root@<your-container-id>:/opt/gopath/src/github.com/hyperledger/fabric/peer#
+    ```
+1. In the `cli` execute this command:
+
+    ```
+    root@<your-container-id>:/opt/gopath/src/github.com/hyperledger/fabric/peer# ./scripts/myfirstchaincode.sh
+    ```
+
+    This will execute a chaincode found in [`$GOPATH/src/github.com/hlf-go/writing-chaincodes/chaincodes/myfirstchaincode/chaincode.go`](../chaincodes/myfirstchaincode/chaincode.go). The chaincode is very simple. It will produce the following console output `Hello Init` when the chaincode method `Init` is called. `Hello Invoke` when the chaincode method `Invoke` is called.
+
+    The script reponsible for executing the chaincode is found in [`$GOPATH/src/github.com/hlf-go/writing-chaincodes/fabric/scripts/myfirstchaincode.sh`](./scripts/myfirstchaincode.sh).Please study it.
+
+1. Open another terminal, navigate to `$GOPATH/src/github.com/hlf-go/fabric` and execute this command:
+
+    ```
+    ./fabricOps.sh status
+    ```
+
+    This should display the following running containers:
+
+    ```
+    dev-peer0.org1.example.com-mycc-1.0: Up 38 seconds
+    peer0.org1.example.com: Up About a minute
+    orderer.example.com: Up About a minute
+    cli: Up About a minute
+    ```
+    Note, message may be slightly different in terms of up time.
+
+1. In the same terminal as the above step, execute the following command:
+
+    ```
+    docker logs dev-peer0.org1.example.com-mycc-1.0
+    ```
+
+    This should produce the following:
+
+    ```
+    Hello Init
+    Hello Invoke
+    ```
 
 # Disclaimer
 
