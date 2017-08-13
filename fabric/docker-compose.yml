@@ -68,4 +68,3 @@ services:
       - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
       - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts
       - ../chaincodes:/opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/go
-      - ./logs:/opt/gopath/src/github.com/hyperledger/fabric/peer/logs/

@@ -15,13 +15,6 @@ function verifyArg() {
     fi
 }
 
-function createLogFolder(){
-    cd $PROJECT_DIR
-    if [ ! -d ./logs ]; then
-        mkdir ./logs
-    fi
-}
-
 function createTools(){
 
     echo
@@ -119,34 +112,34 @@ function cleanNetwork() {
             rm -rf ./tools
     fi
 
-    if [ -d ./logs ]; then
-            rm -rf ./logs
-    fi
-
     cd $GOPATH/src/github.com/hyperledger/fabric
     make clean
 
-    docker rm -f $(docker ps -aq)
-    docker rmi -f $(docker images -q)
+    # This operations removes all docker containers and images regardless
+    #
+    # docker rm -f $(docker ps -aq)
+    # docker rmi -f $(docker images -q)
+    
+    # This removes containers used to support the running chaincode.
+    docker rm -f $(docker ps --filter "name=dev" --filter "name=peer0.org1.example.com" --filter "name=cli" --filter "name=orderer.example.com" -q)
+
+    # This removes only images hosting a running chaincode, and in this
+    # particular case has the prefix dev-* 
+    docker rmi $(docker images | grep dev | xargs -n 1 docker images --format "{{.ID}}" | xargs -n 1 docker rmi -f)
 }
 
 function networkStatus() {
-    docker ps -a | grep '[peer0* | orderer* | cli ]'
+    docker ps --format "{{.Names}}: {{.Status}}" | grep '[peer0* | orderer* | cli ]' 
 }
 
 function dockerCli(){
     docker exec -it cli /bin/bash
 }
 
-function dockerPeer(){
-    docker logs peer0.org1.example.com -f
-}
-
 # Network operations
 verifyArg
 case $FIRST_ARG in
     "start")
-        createLogFolder
         createTools
         generateArtifacts
         startNetwork
@@ -160,11 +153,8 @@ case $FIRST_ARG in
     "cli")
         dockerCli
         ;;
-    "peer")
-        dockerPeer
-        ;;
     *)
-        echo "Useage: networkOps.sh start | status | clean | cli | peer"
+        echo "Useage: networkOps.sh start | status | clean | cli "
         exit 1;
 esac
 
