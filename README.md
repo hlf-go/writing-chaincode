@@ -24,6 +24,8 @@ In this document, you will learn to:
 
 * [Debugging chaincode](#debugChaincode)
 
+* [Moving on](#movingOn)
+
 # <a name="setupDevEnv">Setup for chaincode development</a>
 
 Setting up a development environment for chaincode projects is no different from setting up for other non chaincode Go projects. 
@@ -477,6 +479,12 @@ To help you get going with your learning, please follow the following steps:
     Hello Init
     Hello Invoke
     ```
+
+# <a name="movingOn">Moving on</a>
+
+The training materials presented here are extremely stunted to help you understand very basic concepts. 
+
+If you feel that you have the confidence to move on from this material feel free to fork it and make all the changes to suit your needs.  
 
 # Disclaimer
 
