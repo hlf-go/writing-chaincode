@@ -482,9 +482,14 @@ To help you get going with your learning, please follow the following steps:
 
 # <a name="movingOn">Moving on</a>
 
-The training materials presented here are extremely stunted to help you understand very basic concepts. 
+The training materials presented here are extremely stunted to help you understand basic concepts. It does not necessarily represent the only way of working. There are other ways of approaching your chaincode development.
 
-If you feel that you have the confidence to move on from this material feel free to fork it and make all the changes to suit your needs.  
+Once you have mastered basic concepts, you are encourage to fork this repository, modify it and experiment with other ways of working. The areas that will give clues to modifying this repo to suit your needs are:
+
+* `$GOPATH/src` - as long as your chaincode project is organised around this directory, you will be able to take advantage of Go tooling.
+* `fabricOp.sh` - focus your attention on section related fabric network artifact and this will give you clues to how membership policies are generated and try to relate it to the description in the [official documentation](https://hyperledger-fabric.readthedocs.io/en/latest/build_network.html#crypto-generator)
+* `docker-compose.yml` - the mapping between `cli` component is specified in `volume` section, modify it to suit your own configuration.
+* [`myfirstchaincode.sh`](./fabric/scripts/myfirstchaincode.sh) - modify these accordingly (i.e. see [official documentation](https://hyperledger-fabric.readthedocs.io/en/latest/chaincode4ade.html))
 
 # Disclaimer
 
